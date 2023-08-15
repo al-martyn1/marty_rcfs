@@ -16,6 +16,10 @@
 #include <stdexcept>
 #include <cstring>
 
+
+//
+#include "assert.h"
+
 //----------------------------------------------------------------------------
 
 
@@ -39,6 +43,51 @@ namespace marty_rcfs {
 //----------------------------------------------------------------------------
 
 
+
+
+//----------------------------------------------------------------------------
+
+class ResourceFileSystem;
+
+class AutoFileHandle
+{
+    ResourceFileSystem *pRcfs;
+    int                 fileId = -1;
+
+public:
+
+    AutoFileHandle(ResourceFileSystem *p) : pRcfs(p) {}
+    ~AutoFileHandle() { close(); }
+    AutoFileHandle() = delete;
+    AutoFileHandle(const AutoFileHandle&) = delete;
+    AutoFileHandle(AutoFileHandle&&) = delete;
+    AutoFileHandle& operator=(const AutoFileHandle&) = delete;
+    AutoFileHandle& operator=(AutoFileHandle&&) = delete;
+
+    bool open (const std::string &fullName);
+    bool close();
+
+    bool read(std::vector<std::uint8_t> &buf, std::size_t nBytesToRead) const;
+    bool read(std::vector<char> &buf, std::size_t nBytesToRead) const;
+    bool read(std::string &buf, std::size_t nBytesToRead) const;
+
+    bool read(std::vector<std::uint8_t> &buf) const;
+    bool read(std::vector<char> &buf) const;
+    bool read(std::string &buf) const;
+
+    // bool closeFile(int iFile) const
+    // int openFile(const std::string &fullName) const
+
+
+
+};
+
+//----------------------------------------------------------------------------
+
+
+
+
+//----------------------------------------------------------------------------
 class ResourceFileSystem
 {
 
@@ -568,6 +617,110 @@ public:
 
 
 }; // class ResourceFileSystem
+
+//----------------------------------------------------------------------------
+
+
+
+
+//----------------------------------------------------------------------------
+inline
+bool AutoFileHandle::open (const std::string &fullName)
+{
+    MARTY_RCFS_ASSERT(pRcfs);
+
+    close();
+
+    int handle = pRcfs->openFile(fullName);
+    if (handle<0)
+    {
+        return false;
+    }
+
+    fileId = handle;
+
+    return true;
+}
+
+//----------------------------------------------------------------------------
+inline
+bool AutoFileHandle::close()
+{
+    MARTY_RCFS_ASSERT(pRcfs);
+
+    if (fileId<0)
+    {
+        return true;
+    }
+
+    if (pRcfs->closeFile(fileId))
+    {
+        fileId = -1;
+        return true;
+    }
+
+    return false;
+}
+
+//----------------------------------------------------------------------------
+inline
+bool AutoFileHandle::read(std::vector<std::uint8_t> &buf, std::size_t nBytesToRead) const
+{
+    MARTY_RCFS_ASSERT(pRcfs);
+    MARTY_RCFS_ASSERT(fileId>=0);
+
+    return pRcfs->readFile(fileId, buf, nBytesToRead);
+}
+
+//----------------------------------------------------------------------------
+inline
+bool AutoFileHandle::read(std::vector<char> &buf, std::size_t nBytesToRead) const
+{
+    MARTY_RCFS_ASSERT(pRcfs);
+    MARTY_RCFS_ASSERT(fileId>=0);
+
+    return pRcfs->readFile(fileId, buf, nBytesToRead);
+}
+
+//----------------------------------------------------------------------------
+inline
+bool AutoFileHandle::read(std::string &buf, std::size_t nBytesToRead) const
+{
+    MARTY_RCFS_ASSERT(pRcfs);
+    MARTY_RCFS_ASSERT(fileId>=0);
+
+    return pRcfs->readFile(fileId, buf, nBytesToRead);
+}
+
+//----------------------------------------------------------------------------
+inline
+bool AutoFileHandle::read(std::vector<std::uint8_t> &buf) const
+{
+    MARTY_RCFS_ASSERT(pRcfs);
+    MARTY_RCFS_ASSERT(fileId>=0);
+
+    return pRcfs->readFile(fileId, buf);
+}
+
+//----------------------------------------------------------------------------
+inline
+bool AutoFileHandle::read(std::vector<char> &buf) const
+{
+    MARTY_RCFS_ASSERT(pRcfs);
+    MARTY_RCFS_ASSERT(fileId>=0);
+
+    return pRcfs->readFile(fileId, buf);
+}
+
+//----------------------------------------------------------------------------
+inline
+bool AutoFileHandle::read(std::string &buf) const
+{
+    MARTY_RCFS_ASSERT(pRcfs);
+    MARTY_RCFS_ASSERT(fileId>=0);
+
+    return pRcfs->readFile(fileId, buf);
+}
 
 
 
