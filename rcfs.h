@@ -2,6 +2,7 @@
 
 
 //----------------------------------------------------------------------------
+#include "common.h"
 #include "directory_entry.h"
 
 #if !defined(MARTY_RCFS_DISABLE_DECRYPT)
@@ -12,6 +13,7 @@
 
 #include <utility>
 #include <unordered_map>
+#include <map>
 #include <exception>
 #include <stdexcept>
 #include <cstring>
@@ -101,6 +103,12 @@ protected:
     };
 
 
+    #if defined(MARTY_RCFS_ORDERED)
+        typedef std::map<int, OpenedFileInfo>            OpenedFileInfoMapType;
+    #else
+        typedef std::unordered_map<int, OpenedFileInfo>  OpenedFileInfoMapType;
+    #endif
+
 
     bool                                                m_caseSens = false; //!< Устанавливается один раз при инициализации и поменять нельзя
     DirectoryEntry                                     *m_pRootDirectory;
@@ -109,7 +117,7 @@ protected:
     #endif
 
     mutable int                                        m_nextDescriptor = 1; // 31 бит хватит для всех. Для многопоточки надо бы атомики !!!
-    mutable std::unordered_map<int, OpenedFileInfo>    m_openedFiles;        // В многопотоке эту мапу надо бы защитить !!!
+    mutable OpenedFileInfoMapType                      m_openedFiles;        // В многопотоке эту мапу надо бы защитить !!!
 
     int generateFileDescriptor() const
     {
@@ -447,7 +455,7 @@ public:
 
     bool closeFile(int iFile) const
     {
-        std::unordered_map<int, OpenedFileInfo>::iterator ofit = m_openedFiles.find(iFile);
+        OpenedFileInfoMapType::iterator ofit = m_openedFiles.find(iFile);
         if (ofit==m_openedFiles.end())
             return false;
 
@@ -461,7 +469,7 @@ public:
 
     std::size_t getFileSize(int iFile) const
     {
-        std::unordered_map<int, OpenedFileInfo>::const_iterator ofit = m_openedFiles.find(iFile);
+        OpenedFileInfoMapType::const_iterator ofit = m_openedFiles.find(iFile);
         if (ofit==m_openedFiles.end())
             return (std::size_t)-1;
 
@@ -498,7 +506,7 @@ protected:
 
     const std::uint8_t* getOpenedFileReadParams(int iFile, std::size_t &fileSize, std::size_t &curPos) const
     {
-        std::unordered_map<int, OpenedFileInfo>::iterator ofit = m_openedFiles.find(iFile);
+        OpenedFileInfoMapType::iterator ofit = m_openedFiles.find(iFile);
         if (ofit==m_openedFiles.end())
             return 0;
 

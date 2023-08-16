@@ -22,6 +22,12 @@ struct FileInfo
     std::string name;
 };
 
+
+/*
+    bool EnumerateHandler(const std::string &dirPath, const marty_rcfs::FileInfo &fileInfo)
+*/
+
+
 template<typename ItemHandler> inline
 bool enumerateDirectoryItems( const std::string &dirPath, ItemHandler handler, bool recurse=false )
 {

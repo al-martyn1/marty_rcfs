@@ -1,12 +1,14 @@
 #pragma once
 
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <vector>
 #include <cstdint>
 #include <exception>
 #include <stdexcept>
 
+#include "common.h"
 #include "rcfs_flags.h"
 
 /*
@@ -25,10 +27,16 @@ class DirectoryEntry
 
     friend class ResourceFileSystem;
 
+    #if defined(MARTY_RCFS_ORDERED)
+        typedef std::map<std::string, DirectoryEntry>               DirectoryEntryMapType;
+    #else
+        typedef std::unordered_map<std::string, DirectoryEntry>     DirectoryEntryMapType;
+    #endif
+
 protected:
 
     FileAttrs                                        m_attrs = FileAttrs::FileAttrsDefault;
-    std::unordered_map<std::string, DirectoryEntry>  m_items;
+    DirectoryEntryMapType                            m_items;
     //std::map<std::string, DirectoryEntry>  m_items;
 
     const std::uint8_t                              *m_pConstFileData = 0;
@@ -52,12 +60,12 @@ public:
         return m_attrs;
     }
 
-    std::unordered_map<std::string, DirectoryEntry>::const_iterator itemsBegin() const
+    DirectoryEntryMapType::const_iterator itemsBegin() const
     {
         return m_items.begin();
     }
 
-    std::unordered_map<std::string, DirectoryEntry>::const_iterator itemsEnd() const
+    DirectoryEntryMapType::const_iterator itemsEnd() const
     {
         return m_items.end();
     }
@@ -309,7 +317,7 @@ DirectoryEntry* DirectoryEntry::findAnyChildEntry(const std::string &name) const
     if (name.empty())
         return 0;
 
-    std::unordered_map<std::string, DirectoryEntry>::const_iterator it = m_items.find(name);
+    DirectoryEntryMapType::const_iterator it = m_items.find(name);
     if (it==m_items.end())
         return 0;
     return const_cast<DirectoryEntry*>(&it->second);
