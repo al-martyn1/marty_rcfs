@@ -126,7 +126,7 @@ protected:
     mutable OpenedFileInfoMapType                      m_openedFiles;        // В многопотоке эту мапу надо бы защитить !!!
 
 
-    mutable                                            m_sealed = false; //!< Запечатано - больше нельзя обновлять ресурсы
+    mutable bool                                       m_sealed = false; //!< Запечатано - больше нельзя обновлять ресурсы
 
     //------------------------------
 
