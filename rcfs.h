@@ -106,6 +106,9 @@ protected:
     };
 
 
+
+    //------------------------------
+
     #if defined(MARTY_RCFS_ORDERED)
         typedef std::map<int, OpenedFileInfo>            OpenedFileInfoMapType;
     #else
@@ -121,6 +124,14 @@ protected:
 
     mutable int                                        m_nextDescriptor = 1; // 31 бит хватит для всех. Для многопоточки надо бы атомики !!!
     mutable OpenedFileInfoMapType                      m_openedFiles;        // В многопотоке эту мапу надо бы защитить !!!
+
+
+    mutable                                            m_sealed = false; //!< Запечатано - больше нельзя обновлять ресурсы
+
+    //------------------------------
+
+
+
 
     int generateFileDescriptor() const
     {
@@ -146,6 +157,7 @@ public:
     #if !defined(MARTY_RCFS_DISABLE_DECRYPT)
     , m_pFileDecoder(pFileDecoder)
     #endif
+    , m_sealed(false)
     {}
 
     ResourceFileSystem( ResourceFileSystem&& rcfsOther )
@@ -154,6 +166,7 @@ public:
     #if !defined(MARTY_RCFS_DISABLE_DECRYPT)
     , m_pFileDecoder(std::move(rcfsOther.m_pFileDecoder))
     #endif
+    , m_sealed(std::move(rcfsOther.m_sealed))
     {}
 
     ResourceFileSystem( const ResourceFileSystem& rcfsOther )
@@ -162,7 +175,14 @@ public:
     #if !defined(MARTY_RCFS_DISABLE_DECRYPT)
     , m_pFileDecoder(rcfsOther.m_pFileDecoder)
     #endif
+    , m_sealed(rcfsOther.m_sealed)
     {}
+
+
+    void seal() const
+    {
+        m_sealed = true;
+    }
 
 
     bool getCaseSens() const { return m_caseSens; }
@@ -280,6 +300,8 @@ public:
 
     bool createDirectory( const std::string &pathName, bool forceCreateFullPath = true) const
     {
+        MARTY_RCFS_ASSERT(!m_sealed);
+
         checkRoot();
 
         std::vector<std::string> pathParts = splitPath(pathName);
@@ -300,6 +322,8 @@ public:
 
     bool createFile(const std::string &fullName, bool createPath = true, bool failOnExist = true) const // create an empty file
     {
+        MARTY_RCFS_ASSERT(!m_sealed);
+
         checkRoot();
 
         std::vector<std::string> pathParts = splitPath(fullName);
@@ -404,6 +428,8 @@ public:
                     #endif
                     ) const
     {
+        MARTY_RCFS_ASSERT(!m_sealed);
+
         DirectoryEntry* pFileEntry = findFileEntry(fullName);
 
         if (!pFileEntry)
